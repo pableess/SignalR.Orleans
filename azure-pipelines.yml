@@ -20,11 +20,12 @@ steps:
     command: 'test'
     projects: '**/*[Tt]ests/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
+
 - task: DotNetCoreCLI@2
   displayName: 'dotnet pack'
   inputs:
     command: 'custom'
-    projects: '**/*.csproj'
+    projects: 'src/SignalR.Orleans/SignalR.Orleans.csproj'
     custom: 'pack'
     arguments: '--configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory) -p:PackageId=Mmm.SignalR.Orleans'
 
