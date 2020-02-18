@@ -258,25 +258,31 @@ namespace SignalR.Orleans
 
         public void Dispose()
         {
-            var toUnsubscribe = new List<Task>();
-            if (_serverStream != null)
+            // forked and modifed as this there wsa an issue with deadlocking during GenericHost shutdown hosting with aspnetcore 3.1
+            var cleanup = Task.Factory.StartNew(async () =>
             {
-                var subscriptions = _serverStream.GetAllSubscriptionHandles().Result;
-                toUnsubscribe.AddRange(subscriptions.Select(s => s.UnsubscribeAsync()));
-            }
+                var toUnsubscribe = new List<Task>();
+                if (_serverStream != null)
+                {
+                    var subscriptions = await _serverStream.GetAllSubscriptionHandles().ConfigureAwait(false);
+                    toUnsubscribe.AddRange(subscriptions.Select(s => s.UnsubscribeAsync()));
+                }
 
-            if (_allStream != null)
-            {
-                var subscriptions = _allStream.GetAllSubscriptionHandles().Result;
-                toUnsubscribe.AddRange(subscriptions.Select(s => s.UnsubscribeAsync()));
-            }
+                if (_allStream != null)
+                {
+                    var subscriptions = await _allStream.GetAllSubscriptionHandles().ConfigureAwait(false);
+                    toUnsubscribe.AddRange(subscriptions.Select(s => s.UnsubscribeAsync()));
+                }
 
-            var serverDirectoryGrain = _clusterClientProvider.GetClient().GetServerDirectoryGrain();
-            toUnsubscribe.Add(serverDirectoryGrain.Unregister(_serverId));
+                var serverDirectoryGrain = _clusterClientProvider.GetClient().GetServerDirectoryGrain();
+                toUnsubscribe.Add(serverDirectoryGrain.Unregister(_serverId));
 
-            Task.WaitAll(toUnsubscribe.ToArray());
+                await Task.WhenAll(toUnsubscribe.ToArray());
 
-            _timer?.Dispose();
+                _timer?.Dispose();
+            }, TaskCreationOptions.RunContinuationsAsynchronously);
+
+            cleanup.Wait();
         }
     }
 
