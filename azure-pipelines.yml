@@ -27,7 +27,7 @@ steps:
     command: 'custom'
     projects: 'src/SignalR.Orleans/SignalR.Orleans.csproj'
     custom: 'pack'
-    arguments: '--configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory) -p:PackageId=Mmm.SignalR.Orleans'
+    arguments: '--configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory) -p:PackageVersion=1.5.0.$(Build.BuildId) -p:PackageId=Mmm.SignalR.Orleans' 
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet push'
